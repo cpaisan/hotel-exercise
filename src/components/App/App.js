@@ -51,6 +51,16 @@ const sortHotelsByPrice = (sort = 'asc', hotels = [], pristineHotels = []) => {
   );
 };
 
+/**
+  @param {function} - function that sets search state
+  @param {function} - function that sets sort state
+  @return {undefined}
+*/
+const resetFilters = (setSearch, setSort) => {
+  setSearch('');
+  setSort('recommended');
+};
+
 const App = () => {
   const [pristineHotels, setPristineHotels] = useState([]);
   const [hotels, setHotels] = useState([]);
@@ -76,6 +86,7 @@ const App = () => {
     <div className="app-container">
       <div className="content">
         <HotelSearchForm
+          onClickReset={() => resetFilters(setSearch, setSort)}
           onChange={({ target: { value = '' } }) => setSearch(value)}
           onPriceSortChange={({ target: { value } }) => setSort(value)}
           sort={sort}
