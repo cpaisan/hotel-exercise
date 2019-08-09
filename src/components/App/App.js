@@ -66,14 +66,18 @@ const App = () => {
   const [hotels, setHotels] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('recommended');
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    hotelResultService.get().then(response => {
-      const { results = {} } = response || {};
-      const { hotels = [] } = results || {};
-      setPristineHotels(hotels);
-      setHotels(hotels);
-    });
+    hotelResultService
+      .get()
+      .then(response => {
+        const { results = {} } = response || {};
+        const { hotels = [] } = results || {};
+        setPristineHotels(hotels);
+        setHotels(hotels);
+      })
+      .catch(() => setError(true));
   }, []);
 
   const hotelsSortedByPriceArray = sortHotelsByPrice(
@@ -81,7 +85,7 @@ const App = () => {
     hotels,
     pristineHotels,
   );
-
+  const filteredHotelsArray = filterHotels(search, hotelsSortedByPriceArray);
   return (
     <div className="app-container">
       <div className="content">
@@ -92,7 +96,16 @@ const App = () => {
           sort={sort}
           search={search}
         />
-        <HotelList hotels={filterHotels(search, hotelsSortedByPriceArray)} />
+        {error && (
+          <h1>
+            There was an error getting the hotel list. Please refresh the page.
+          </h1>
+        )}
+        {search.length > 0 &&
+          filteredHotelsArray.length === 0 && (
+            <h1>There are no hotels that match the provided name.</h1>
+          )}
+        {!error && <HotelList hotels={filteredHotelsArray} />}
       </div>
     </div>
   );
