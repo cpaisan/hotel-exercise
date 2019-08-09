@@ -17,26 +17,71 @@ const filterHotels = (search = '', hotels = []) =>
     name.toLowerCase().includes(search.toLowerCase()),
   );
 
+/**
+    @param {string} - sort string (asc, desc, recommended)
+    @param {array} - array of hotels
+    @param {array} - array of hotels in the order as received from the API
+    @return {array} - array of hotels sorted by asc, desc, or recommended
+  */
+const sortHotelsByPrice = (sort = 'asc', hotels = [], pristineHotels = []) => {
+  // Sort mutates the array so we create a shallow copy
+  const sortedHotels = [...hotels];
+  if (sort === 'recommended') return pristineHotels;
+  if (sort === 'asc')
+    return sortedHotels.sort(
+      (
+        { lowestAveragePrice: { amount: amountA } },
+        { lowestAveragePrice: { amount: amountB } },
+      ) => {
+        if (amountA < amountB) return -1;
+        if (amountA > amountB) return 1;
+        return 0;
+      },
+    );
+  // return hotels sorted by descending by default
+  return sortedHotels.sort(
+    (
+      { lowestAveragePrice: { amount: amountA } },
+      { lowestAveragePrice: { amount: amountB } },
+    ) => {
+      if (amountA < amountB) return 1;
+      if (amountA > amountB) return -1;
+      return 0;
+    },
+  );
+};
+
 const App = () => {
+  const [pristineHotels, setPristineHotels] = useState([]);
   const [hotels, setHotels] = useState([]);
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('recommended');
 
   useEffect(() => {
     hotelResultService.get().then(response => {
       const { results = {} } = response || {};
       const { hotels = [] } = results || {};
+      setPristineHotels(hotels);
       setHotels(hotels);
     });
   }, []);
+
+  const hotelsSortedByPriceArray = sortHotelsByPrice(
+    sort,
+    hotels,
+    pristineHotels,
+  );
 
   return (
     <div className="app-container">
       <div className="content">
         <HotelSearchForm
-          search={search}
           onChange={({ target: { value = '' } }) => setSearch(value)}
+          onPriceSortChange={({ target: { value } }) => setSort(value)}
+          sort={sort}
+          search={search}
         />
-        <HotelList hotels={filterHotels(search, hotels)} />
+        <HotelList hotels={filterHotels(search, hotelsSortedByPriceArray)} />
       </div>
     </div>
   );
