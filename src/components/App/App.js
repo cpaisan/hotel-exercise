@@ -1,65 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import './App.style.scss'
+import './App.style.scss';
 
 import hotelResultService from '../../services/hotel-result/hotel-result.service';
 
+// Components
+import HotelSearchForm from '../HotelSearchForm';
+import HotelList from '../HotelList';
+
+/**
+  @param {string} - search string
+  @param {array} - array of hotels
+  @return {array} - array of hotels filtered by name against the search string
+*/
+const filterHotels = (search = '', hotels = []) =>
+  hotels.filter(({ hotelStaticContent: { name = '' } = {} }) =>
+    name.toLowerCase().includes(search.toLowerCase()),
+  );
+
 const App = () => {
-    const [hotels, setHotels] = useState([]);
+  const [hotels, setHotels] = useState([]);
+  const [search, setSearch] = useState('');
 
-    useEffect(() => {
-        hotelResultService.get().then(response => {
-            setHotels(response.results.hotels)
-        })
-    }, []);
+  useEffect(() => {
+    hotelResultService.get().then(response => {
+      const { results = {} } = response || {};
+      const { hotels = [] } = results || {};
+      setHotels(hotels);
+    });
+  }, []);
 
-    return (
-        <div className="app-container">
-            <div className="content">
-                <div>
-                    <div className="filters">
-                        Hotel name
-                        <input type="text" className="input" maxLength={1}/>
-                        Price
-                        <select name="" className="select">
-                            <option value="">Recommended</option>
-                            <option value="">Price low-to-high</option>
-                            <option value="">Price high-to-low</option>
-                        </select>
-                        <button className="button">Reset</button>
-                    </div>
-                </div>
-
-                <div className="hotel-list">
-                    {hotels.map(hotel => (
-                        <div className="hotel-card" key={hotel.id}>
-                            <div
-                                className="image"
-                                style={{ backgroundImage: `url(${hotel.hotelStaticContent.mainImage.url})`}}>
-                            </div>
-                            <div className="hotel-details">
-                                <div className="hotel-name">
-                                    {hotel.hotelStaticContent.name}
-                                </div>
-                                <div className="location">
-                                    {hotel.hotelStaticContent.neighborhoodName}
-                                </div>
-                            </div>
-                            <div className="price-details">
-                                <span className="price">
-                                    <span dangerouslySetInnerHTML={{ __html: hotel.lowestAveragePrice.symbol }}></span>
-                                    {hotel.lowestAveragePrice.amount}
-                                </span>
-                                <span className="rewards">
-                                    {hotel.rewards.miles} miles
-                                </span>
-                                <button className="button">Select</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    )
-}
+  return (
+    <div className="app-container">
+      <div className="content">
+        <HotelSearchForm
+          search={search}
+          onChange={({ target: { value = '' } }) => setSearch(value)}
+        />
+        <HotelList hotels={filterHotels(search, hotels)} />
+      </div>
+    </div>
+  );
+};
 
 export default App;
